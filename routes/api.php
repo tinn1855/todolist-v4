@@ -1,5 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\TodoController;
+use App\Http\Controllers\TodoController;
 
 Route::get('/todos', [TodoController::class, 'index']);
