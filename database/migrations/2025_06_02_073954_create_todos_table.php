@@ -19,6 +19,8 @@ return new class extends Migration
             $table->enum('priority', ['low', 'medium', 'high'])->default('medium');
             $table->enum('status', ['incomplete', 'inprogress', 'completed'])->default('incomplete');
             $table->timestamps();
+
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 
