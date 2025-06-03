@@ -8,10 +8,30 @@ use App\Models\Todo;
 class TodoController extends Controller
 {
     public function index(Request $request) {
-        $user = $request->user();
+        try {
+            $user = $request->user();
 
-        $todos = Todo::where('user_id', $user->id)->get();
+            if (!$user) {
+                return response()->json([
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
 
-        return response()->json($todos);
+            $todos = $user->todos()->orderBy('created_at', 'desc')->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Todos retrieved successfully',
+                'data' => $todos,
+                'count' => $todos->count()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve todos',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }
