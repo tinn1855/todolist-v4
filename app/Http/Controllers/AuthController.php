@@ -47,4 +47,20 @@ class AuthController extends Controller
         $user->tokens()->delete();
         return response()->json(['message' => 'Logged out successfully']);
     }
+
+    public function getLoginStatus(Request $request)
+    {
+        $loginInfo = ['isLogin' => false];
+        if ($user = auth()->user()) {
+            $loginInfo = [
+                'isLogin' => true,
+                'userId' => $user->id,
+                'email' => 'test@example.com',
+                'name' => 'User1'
+            ];
+        }
+
+        return response()->json($loginInfo);
+    }
+
 }

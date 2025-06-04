@@ -14,3 +14,8 @@ Route::middleware('auth:sanctum')->group(function() {
 });
 
 
+Route::group(['prefix' => 'api', 'as' => 'api.', 'middleware' => 'validate_api_token'], function () {
+    Route::post('api/checkLogin', 'ApiController@getLoginStatus')->name('check_login_status');
+});
+
+
