@@ -9,58 +9,72 @@ use App\Models\User;
 
 class AuthController extends Controller
 {
-    public function login(Request $request) {
-    try {
-        $request->validate([
+    // Đăng nhập
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
             'username' => 'required|alpha_dash',
-            'password' => 'required'
+            'password' => 'required|string',
         ]);
 
-        $user = User::where('username', $request->username)->first();
+        $user = User::where('username', $credentials['username'])->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Sai tài khoản hoặc mật khẩu'
+                'message' => 'Sai tài khoản hoặc mật khẩu.',
             ], 401);
         }
 
+        // Xoá token cũ (nếu cần logout các thiết bị khác)
         $user->tokens()->delete();
+
         $token = $user->createToken('api_token')->plainTextToken;
 
         return response()->json([
             'success' => true,
-            'message' => 'Đăng nhập thành công',
+            'message' => 'Đăng nhập thành công.',
             'token' => $token,
-            'user' => $user
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'name' => $user->name,
+            ],
         ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Server error: ' . $e->getMessage()
-        ], 500);
-    };
-}
+    }
+
+    // Đăng xuất
     public function logout(Request $request)
     {
-        $user = $request->user();
-        $user->tokens()->delete();
-        return response()->json(['message' => 'Logged out successfully']);
+        $request->user()->tokens()->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đăng xuất thành công.'
+        ]);
     }
 
+    // Kiểm tra trạng thái đăng nhập
     public function getLoginStatus(Request $request)
     {
-        $loginInfo = ['isLogin' => false];
-        if ($user = auth()->user()) {
-            $loginInfo = [
-                'isLogin' => true,
-                'userId' => $user->id,
-                'email' => 'test@example.com',
-                'name' => 'User1'
-            ];
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json([
+                'isLogin' => false,
+                'message' => 'Chưa đăng nhập.'
+            ]);
         }
 
-        return response()->json($loginInfo);
+        return response()->json([
+            'isLogin' => true,
+            'user' => [
+                'id' => $user->id,
+                'username' => $user->username,
+                'email' => $user->email,
+                'name' => $user->name,
+            ]
+        ]);
     }
-
 }
