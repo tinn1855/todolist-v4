@@ -44,7 +44,7 @@ class TodoController extends Controller
                 'title' => 'required|string',
                 'description' => 'nullable|string',
                 'priority' => 'nullable|in:low,medium,high',
-                'status' => 'nullable|in:pending,completed',
+                'status' => 'nullable|in:incomplete,inprogress,completed',
             ]);
 
             $validated['user_id'] = $request->user()->id;
