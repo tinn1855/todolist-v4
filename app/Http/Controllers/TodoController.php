@@ -7,7 +7,9 @@ use App\Models\Todo;
 
 class TodoController extends Controller
 {
-    public function index(Request $request) {
+    // Lấy danh sách todos
+    public function index(Request $request)
+    {
         try {
             $user = $request->user();
 
@@ -25,11 +27,103 @@ class TodoController extends Controller
                 'data' => $todos,
                 'count' => $todos->count()
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to retrieve todos',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Tạo mới todo
+    public function store(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string',
+                'description' => 'nullable|string',
+                'priority' => 'nullable|in:low,medium,high',
+                'status' => 'nullable|in:pending,completed',
+            ]);
+
+            $validated['user_id'] = $request->user()->id;
+
+            $todo = Todo::create($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Todo created successfully',
+                'data' => $todo
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create todo',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Cập nhật todo
+    public function update(Request $request, $id)
+    {
+        try {
+            $validated = $request->validate([
+                'title' => 'required|string',
+                'description' => 'nullable|string',
+                'priority' => 'nullable|in:low,medium,high',
+                'status' => 'nullable|in:pending,completed',
+            ]);
+
+            $todo = Todo::where('id', $id)->where('user_id', $request->user()->id)->first();
+
+            if (!$todo) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Todo not found'
+                ], 404);
+            }
+
+            $todo->update($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Todo updated successfully',
+                'data' => $todo
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update todo',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Xoá todo
+    public function destroy(Request $request, $id)
+    {
+        try {
+            $todo = Todo::where('id', $id)->where('user_id', $request->user()->id)->first();
+
+            if (!$todo) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Todo not found'
+                ], 404);
+            }
+
+            $todo->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Todo deleted successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete todo',
                 'error' => $e->getMessage()
             ], 500);
         }
