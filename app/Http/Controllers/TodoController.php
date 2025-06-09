@@ -70,10 +70,10 @@ class TodoController extends Controller
     {
         try {
             $validated = $request->validate([
-                'title' => 'required|string',
+                'title' => 'string',
                 'description' => 'nullable|string',
                 'priority' => 'nullable|in:low,medium,high',
-                'status' => 'nullable|in:pending,completed',
+                'status' => 'nullable|in:incomplete,inprogress,completed',
             ]);
 
             $todo = Todo::where('id', $id)->where('user_id', $request->user()->id)->first();
@@ -99,6 +99,39 @@ class TodoController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+    public function markTodosCompletedByStatus(Request $request) {
+        try {
+            $user = $request->user();
+
+            if(!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            $validated =  $request->validate([
+                'status' => 'required|in:incomplete,inprogress'
+            ]);
+
+            $updatedCount = $user->todos()
+                ->where('status', $validated['status'])
+                ->update(['status' => 'completed']);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Todos with status '{$validated['status']}' marked as completed",
+                'updated' => $updatedCount
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark todos as completed',
+                'error' => $e->getMessage()
+            ], 500);
+        };
     }
 
     // Xoá todo
@@ -128,4 +161,48 @@ class TodoController extends Controller
             ], 500);
         }
     }
+
+    public function deleteTodosByStatus(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
+
+            $validated = $request->validate([
+                'status' => 'required|in:completed,inprogress,incomplete'
+            ]);
+
+            $todoCount = $user->todos()->where('status', $validated['status'])->count();
+
+            if ($todoCount === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "No todos found with status '{$validated['status']}'"
+                ], 404);
+            };
+
+            $deletedCount = $user->todos()
+                ->where('status', $validated['status'])
+                ->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Todos with status '{$validated['status']}' deleted successfully",
+                'deleted' => $deletedCount
+            ]);
+        } catch(\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete todos',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }
