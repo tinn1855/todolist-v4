@@ -21,7 +21,8 @@ return [
 
     'allowed_origins' => [
         'http://localhost:4200',
-        'https://todolist-v4-production.up.railway.app'
+        'https://todolist-v4-production.up.railway.app',
+        'https://todolist-v3-zc8u.vercel.app'
     ],
 
     'allowed_origins_patterns' => [],
