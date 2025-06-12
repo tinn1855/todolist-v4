@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Http\Requests\RegisterRequest;
 
 class AuthController extends Controller
 {
@@ -73,8 +74,28 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'username' => $user->username,
                 'email' => $user->email,
-                'name' => $user->name,
+                'full_name' => $user->name,
             ]
         ]);
+    }
+
+    public function register(RegisterRequest $request) {
+        $validated =  $request->validated();
+
+        $user = User::create([
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'full_name' => $validated['full_name'],
+            'role' => $validated['role']
+        ]);
+
+        $token = $user->createToken('api_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'User registered successfully',
+            'user' => $user,
+            'token' => $token
+        ], 201);
     }
 }
